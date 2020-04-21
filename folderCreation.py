@@ -4,9 +4,13 @@ import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+import pandas
+import numpy as np
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.install']
+
+folderTreeExcel = r"./foldertree/folderTree.xlsx"
 
 def main():
     """Shows basic usage of the Drive v3 API.
@@ -34,26 +38,62 @@ def main():
     service = build('drive', 'v3', credentials=creds)
 
     # Call the Drive v3 API
-    # results = service.files().list(
-    #     pageSize=10, fields="nextPageToken, files(id, name)").execute()
-    # items = results.get('files', [])
+    # for folder in folders:
+    #     current = {
+    #         'name': folder,
+    #         'mimeType': 'application/vnd.google-apps.folder'
+    #     }
+    #     file = service.files().create(body=current,
+    #                                 fields='id').execute()
 
-    # if not items:
-    #     print('No files found.')
-    # else:
-    #     print('Files:')
-    #     for item in items:
-    #         print(u'{0} ({1})'.format(item['name'], item['id']))
+    #     root_folder_id = file.get('id')
 
-    file_metadata = {
-        'name': 'ciao',
-        'mimeType': 'application/vnd.google-apps.folder'
-    }
+    folderTreeExcel = r"./foldertree/folderTree.xlsx"
 
-    file = service.files().create(body=file_metadata,
-                                    fields='id').execute()
+    # open the original excel file we want to split
+    workbook = pandas.read_excel(folderTreeExcel, index_col = False) 
+    # save total number of rows
+    numberRows = len(workbook)
 
-    root_folder_id = file.get('id')
+    	
+    # iterate over excel
+    # for i in range(0, len(workbook)):
+    #     if workbook['Root1'][i] != None:
+    #         current = {
+    #             'name': workbook['Root1'][i],
+    #             'mimeType': 'application/vnd.google-apps.folder'        
+    #         }
+    #         file = service.files().create(body=current,
+    #                             fields='id').execute()
+    #         folder_id = file.get('id')
+
+    for col in list(workbook.columns): 
+        if not pandas.isna(col):      
+            print(col)
+            current = {
+                'name': str(col),
+                'mimeType': 'application/vnd.google-apps.folder'        
+            }
+            file = service.files().create(body=current, fields='id').execute()
+            folder_id = file.get('id')
+            sub_folder = {
+                'name': 'ciao', 
+                'mimeType': 'application/vnd.google-apps.folder',
+                'parents': [{'id': folder_id}]
+            }            
+            file = service.files().create(body=sub_folder, fields='id').execute()
+
+            # for values in workbook[col]:
+            #     if not pandas.isna(values):
+            #         print(values)    
+            #         current = {
+            #             'name': str(values),
+            #             'mimeType': 'application/vnd.google-apps.folder',
+            #             'parents': folder_id       
+            #         }
+            #         file = service.files().create(body=current,
+            #                     fields='id').execute() 
+            #         folder_id = file.get('id')                   
 
 if __name__ == '__main__':
     main()
