@@ -16,3 +16,9 @@ Now if you go to the folder credential where you moved the credentials.json file
 In the folderTree folder you have to create a Excel file Like this:
 
 ![Screenshot](screenshot.png)
+
+The script will create the root Folders and then all the following subfolders recursively.
+
+example:
+Root1 --> folder1 --> folder2 --> folder3
+Root2 --> folder21 --> folder22
