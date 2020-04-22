@@ -13,7 +13,7 @@ Sign in into your google drive account and you'll see you have to allow the scri
 Whne you finish the entire process the authentication will be done. 
 Now if you go to the folder credential where you moved the credentials.json file before you'll find a file called "token.pickle" which is the token useed to authenticate for the next times you'll use the script.
 
-In the folderTree folder you have to create a Excel file Like this:
+In the folderTree folder you have to create a Excel file called folderTree.xlsx Like this:
 
 ![Screenshot](screenshot.png)
 
