@@ -4,9 +4,13 @@ import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+import pandas
+import numpy as np
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.install']
+
+folderTreeExcel = r"./foldertree/folderTree.xlsx"
 
 def main():
     """Shows basic usage of the Drive v3 API.
@@ -31,29 +35,46 @@ def main():
         with open('./credential/token.pickle', 'wb') as token:
             pickle.dump(creds, token)
 
+    # service Instance
     service = build('drive', 'v3', credentials=creds)
+    
+    # excel file where the folder tree is
+    folderTreeExcel = r"./foldertree/folderTree.xlsx"
 
-    # Call the Drive v3 API
-    # results = service.files().list(
-    #     pageSize=10, fields="nextPageToken, files(id, name)").execute()
-    # items = results.get('files', [])
+    # open the original excel file we want to split
+    workbook = pandas.read_excel(folderTreeExcel, index_col = False) 
+    # save total number of rows
+    numberRows = len(workbook)
 
-    # if not items:
-    #     print('No files found.')
-    # else:
-    #     print('Files:')
-    #     for item in items:
-    #         print(u'{0} ({1})'.format(item['name'], item['id']))
+    # define function to create a folder 
+    def create_folder(values, folder_id):
+        # if folder_id is none means that is the root Folder, it has no parent
+        if folder_id is None:
+            current = {
+                'name': str(values),
+                'mimeType': 'application/vnd.google-apps.folder',      
+            }
+        # If folder_id is not none means that is a child folder which folder_id is the parent   
+        else:
+            current = {
+                'name': str(values),
+                'mimeType': 'application/vnd.google-apps.folder',
+                'parents': [folder_id]       
+            }
+        # create it on GoogleDrive
+        file = service.files().create(body=current, fields='id').execute() 
+        # get and return the file id          
+        return file.get('id')
 
-    file_metadata = {
-        'name': 'ciao',
-        'mimeType': 'application/vnd.google-apps.folder'
-    }
-
-    file = service.files().create(body=file_metadata,
-                                    fields='id').execute()
-
-    root_folder_id = file.get('id')
+    # Iterate over he excel File
+    for col in list(workbook.columns):         
+        if not pandas.isna(col): 
+            # Assign the value to a root folder name 
+            folder_id = create_folder(col, folder_id=None)
+            # Iterate over next lines to get the subfolder names
+            for values in workbook[col]:
+                if not pandas.isna(values):                     
+                    folder_id = create_folder(values, folder_id)    
 
 if __name__ == '__main__':
     main()
